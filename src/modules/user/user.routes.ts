@@ -9,7 +9,7 @@ userRouter.get('/me', authenticationMiddleware, async (_req, res) => {
 
   if (typeof userId !== 'string') {
     res.status(401).json({
-      message: 'Không xác định được người dùng đăng nhập',
+      message: 'Unable to identify the authenticated user',
     });
     return;
   }
@@ -18,7 +18,7 @@ userRouter.get('/me', authenticationMiddleware, async (_req, res) => {
 
   if (profile === null) {
     res.status(401).json({
-      message: 'Tài khoản không còn khả dụng',
+      message: 'Account is no longer available',
     });
     return;
   }
