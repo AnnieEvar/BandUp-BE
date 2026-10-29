@@ -3,8 +3,8 @@
 Đây là backend Express + TypeScript + Prisma cho BandUp, được xây theo từng
 bước học tập. Dự án hiện có model User, migration PostgreSQL, module lấy hồ sơ
 người dùng, middleware xác minh JWT access token, error handler, Docker Compose
-tùy chọn và CI kiểm tra build. Đăng ký, đăng nhập, refresh token và logout chưa
-được triển khai.
+tùy chọn và CI kiểm tra build. Đăng ký, xác thực email qua đường link, đăng nhập,
+refresh access token và logout đã có.
 
 ## Các phần code chính
 
@@ -27,7 +27,10 @@ Cần Node.js 24.
 
 1. `npm install`.
 2. Nếu chưa có .env, sao chép .env.example thành .env.
-3. Điền DATABASE_URL theo PostgreSQL của bạn.
+3. Điền DATABASE_URL, JWT_EMAIL_VERIFICATION_SECRET, JWT_ACCESS_SECRET,
+   JWT_REFRESH_SECRET (mỗi secret JWT dài ít nhất 32 ký tự),
+   SMTP_USER và SMTP_PASS theo .env.example. Nếu API không chạy tại localhost:3000,
+   điền PUBLIC_API_URL để link trong email trỏ đúng địa chỉ.
 4. `npm run db:generate`.
 5. `npm run dev`.
 6. Gọi GET http://localhost:3000/ trong trình duyệt hoặc Postman.
@@ -69,6 +72,57 @@ docker compose up -d postgres
 Docker Compose là tùy chọn. Nếu đã có PostgreSQL chạy sẵn, dùng DATABASE_URL tương ứng.
 Các biến POSTGRES_* dùng để khởi tạo PostgreSQL Docker; không đổi mật khẩu PostgreSQL đã cài.
 
+## Đăng ký và xác thực email bằng Postman
+
+1. Gửi `POST http://localhost:3000/api/v1/auth/register` với body JSON:
+
+   ```json
+   { "email": "you@example.com", "password": "example-password" }
+   ```
+
+   Thành công trả HTTP 201 và user đang chờ xác thực, ví dụ:
+
+   ```json
+   { "id": "<uuid>", "email": "you@example.com", "role": "STUDENT", "status": "PENDING_VERIFICATION" }
+   ```
+
+   Token xác thực và password hash không nằm trong response. Backend đã yêu cầu SMTP
+   gửi link tới email trên.
+
+2. Mở email và bấm link, hoặc dán toàn bộ link vào Postman và gửi GET. Link có dạng
+   `http://localhost:3000/api/v1/auth/verify-email?token=<token>`. Thành công trả
+   HTTP 200 với `{ "message": "Email verified successfully" }`. Link hết hạn sau
+   30 phút; link thiếu, sai hoặc hết hạn trả HTTP 400.
+
+3. Gửi `POST http://localhost:3000/api/v1/auth/login` với cùng email và password.
+   Thành công trả HTTP 200 cùng thông tin user và `accessToken`. Dùng
+   `Authorization: Bearer <accessToken>` cho `GET /api/v1/users/me`. Response login
+   cũng đặt cookie `bandup_refresh` (HttpOnly, hạn 7 ngày); refresh token không nằm
+   trong JSON. Postman có thể tự giữ cookie cho `localhost`.
+
+4. Gửi `POST http://localhost:3000/api/v1/auth/refresh` không cần body hay Bearer
+   token. Postman gửi cookie từ bước login; thành công trả HTTP 200 với
+   `{ "accessToken": "<new-token>" }`. Nếu thiếu cookie hoặc refresh token sai/hết hạn,
+   API trả HTTP 401. Access token mới dùng với Bearer như ở bước 3.
+
+5. Gửi `POST http://localhost:3000/api/v1/auth/logout` để xóa refresh cookie.
+   Thành công trả HTTP 200 với `{ "message": "Logged out successfully" }`.
+   Sau đó Postman không còn cookie để gọi `/refresh`.
+
+Nếu link hết hạn, gửi `POST /api/v1/auth/resend-verification` với cùng email và password.
+Thành công trả HTTP 200 và `{ "message": "Verification email sent" }`, sau đó mở link mới.
+
+Register với email đã có trả HTTP 409. Email hoặc password không hợp lệ trả HTTP 400.
+Nếu SMTP không gửi được, register trả HTTP 500 và xóa tài khoản đang chờ vừa tạo để
+có thể thử đăng ký lại. Tài khoản chưa xác thực không thể đăng nhập.
+
+Refresh token hiện là JWT không lưu trong database. Logout chỉ xóa cookie trên
+trình duyệt đang dùng; bản sao refresh token đã bị lấy trước đó vẫn hợp lệ đến
+khi hết hạn. Access token đã cấp cũng còn hiệu lực tối đa 30 phút. Khi cần thu hồi
+token ngay hoặc logout từng thiết bị, phải bổ sung trạng thái phiên ở backend.
+Nếu frontend và backend ở hai site khác nhau, cần cấu hình cookie và CORS phù hợp
+trước khi dùng refresh trên trình duyệt.
+
 ## Các lệnh
 
 | Lệnh | Công việc |
@@ -103,5 +157,5 @@ CI hiện chỉ kiểm tra build, chưa có tự động deploy (CD).
 3. CRUD PracticeUser và tách route/service.
 4. Model, migration và module User.
 5. Xác minh JWT cho `GET /api/v1/users/me`.
-6. Tiếp theo: hash mật khẩu, đăng ký và đăng nhập.
+6. Hash mật khẩu, đăng ký, xác thực email và đăng nhập.
 7. Sau đó: refresh token, logout, phân quyền và các lớp bảo vệ khác.

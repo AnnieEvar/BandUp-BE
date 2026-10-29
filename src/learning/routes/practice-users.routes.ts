@@ -48,7 +48,7 @@ practiceUsersRouter.get('/:id', async (req, res) => {
 
   if (id === null) {
     res.status(400).json({
-      message: 'ID không hợp lệ',
+      message: 'Invalid ID',
     });
     return;
   }
@@ -57,7 +57,7 @@ practiceUsersRouter.get('/:id', async (req, res) => {
 
   if (user === null) {
     res.status(404).json({
-      message: 'Không tìm thấy người dùng',
+      message: 'User not found',
     });
     return;
   }
@@ -70,7 +70,7 @@ practiceUsersRouter.post('/', async (req, res) => {
 
   if (name === null) {
     res.status(400).json({
-      message: 'Tên không hợp lệ',
+      message: 'Invalid name',
     });
     return;
   }
@@ -90,14 +90,14 @@ practiceUsersRouter.patch('/:id', async (req, res) => {
 
   if (id === null) {
     res.status(400).json({
-      message: 'ID không hợp lệ',
+      message: 'Invalid ID',
     });
     return;
   }
 
   if (name === null) {
     res.status(400).json({
-      message: 'Tên không hợp lệ',
+      message: 'Invalid name',
     });
     return;
   }
@@ -111,7 +111,7 @@ practiceUsersRouter.patch('/:id', async (req, res) => {
 
   if (updatedUser === null) {
     res.status(404).json({
-      message: 'Không tìm thấy người dùng',
+      message: 'User not found',
     });
     return;
   }
@@ -124,7 +124,7 @@ practiceUsersRouter.delete('/:id', async (req, res) => {
 
   if (id === null) {
     res.status(400).json({
-      message: 'ID không hợp lệ',
+      message: 'Invalid ID',
     });
     return;
   }
@@ -133,7 +133,7 @@ practiceUsersRouter.delete('/:id', async (req, res) => {
 
   if (deletedUser === null) {
     res.status(404).json({
-      message: 'Không tìm thấy người dùng',
+      message: 'User not found',
     });
     return;
   }

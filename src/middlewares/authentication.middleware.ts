@@ -30,7 +30,7 @@ export const authenticationMiddleware: RequestHandler = async (
     extraPart !== undefined
   ) {
     res.status(401).json({
-      message: 'Thiếu hoặc sai định dạng access token',
+      message: 'Access token is missing or malformed',
     });
     return;
   }
@@ -46,7 +46,7 @@ export const authenticationMiddleware: RequestHandler = async (
 
     if (typeof payload.sub !== 'string' || payload.tokenType !== 'access') {
       res.status(401).json({
-        message: 'Access token không hợp lệ',
+        message: 'Invalid access token',
       });
       return;
     }
@@ -55,7 +55,7 @@ export const authenticationMiddleware: RequestHandler = async (
     next();
   } catch {
     res.status(401).json({
-      message: 'Access token không hợp lệ hoặc đã hết hạn',
+      message: 'Access token is invalid or has expired',
     });
   }
 };

@@ -13,7 +13,7 @@ export const errorHandler: ErrorRequestHandler = (
 
   if (isInvalidJson) {
     res.status(400).json({
-      message: 'JSON không hợp lệ',
+      message: 'Invalid JSON',
     });
     return;
   }
@@ -21,6 +21,6 @@ export const errorHandler: ErrorRequestHandler = (
   console.error(error);
 
   res.status(500).json({
-    message: 'Đã xảy ra lỗi trong hệ thống',
+    message: 'An internal server error occurred',
   });
 };
